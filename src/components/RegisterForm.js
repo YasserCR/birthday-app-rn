@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useState} from 'react';
 import {
   StyleSheet,
   Text,
@@ -6,28 +6,59 @@ import {
   TouchableOpacity,
   TextInput,
 } from 'react-native';
+import {validateEmail} from '../utils/validations';
+import firebase from '../utils/firebase';
 
 export default function RegisterForm(props) {
   const {changeForm} = props;
   // eslint-disable-next-line no-undef
   const [formData, setFormData] = useState(defaultValue());
+  // eslint-disable-next-line no-undef
+  const [formError, setFormError] = useState({});
 
   const register = () => {
-    console.log('Registrando');
-    console.log(formData);
+    let errors = {};
+    if (!formData.email || !formData.password || !formData.repeatPassword) {
+      if (!formData.email) errors.email = true;
+      if (!formData.password) errors.password = true;
+      if (!formData.repeatPassword) errors.repeatPassword = true;
+    } else if (!validateEmail(formData.email)) {
+      errors.email = true;
+    } else if (formData.password !== formData.repeatPassword) {
+      errors.password = true;
+      errors.repeatPassword = true;
+    } else if (formData.password.length < 6) {
+      errors.password = true;
+      errors.repeatPassword = true;
+    } else {
+      firebase
+        .auth()
+        .createUserWithEmailAndPassword(formData.email, formData.password)
+        .then(() => {
+          console.log('Cuenta creada');
+        })
+        .catch(() => {
+          setFormError({
+            email: true,
+            password: true,
+            repeatPassword: true,
+          });
+        });
+    }
+    setFormError(errors);
   };
 
   return (
     <>
       <TextInput
-        style={styles.input}
+        style={[styles.input, formError.email && styles.errorInput]}
         placeholder="Correo electrónico"
         placeholderTextColor="#969696"
         onChange={e => setFormData({...formData, email: e.nativeEvent.text})}
       />
 
       <TextInput
-        style={styles.input}
+        style={[styles.input, formError.password && styles.errorInput]}
         placeholder="Contraseña"
         placeholderTextColor="#969696"
         secureTextEntry={true}
@@ -35,7 +66,7 @@ export default function RegisterForm(props) {
       />
 
       <TextInput
-        style={styles.input}
+        style={[styles.input, formError.repeatPassword && styles.errorInput]}
         placeholder="Repetir contraseña"
         placeholderTextColor="#969696"
         secureTextEntry={true}
@@ -45,7 +76,7 @@ export default function RegisterForm(props) {
       />
 
       <TouchableOpacity onPress={register}>
-        <Text style={styles.btnText}>Registrare</Text>
+        <Text style={styles.btnText}>Registrarse</Text>
       </TouchableOpacity>
 
       <View style={styles.login}>
@@ -84,7 +115,10 @@ const styles = StyleSheet.create({
   },
   login: {
     flex: 1,
-    justifyContent: 'flex-end',
     marginBottom: 10,
+    marginTop: 25,
+  },
+  errorInput: {
+    borderColor: '#940c0c',
   },
 });

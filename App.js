@@ -1,8 +1,15 @@
 import React, {useState, useEffect} from 'react';
-import {StyleSheet, Text, SafeAreaView, StatusBar} from 'react-native';
+import {StyleSheet, SafeAreaView, StatusBar, LogBox} from 'react-native';
+import {decode, encode} from 'base-64';
 import Auth from './src/components/Auth';
 import firebase from './src/utils/firebase';
+import ListBirthday from './src/components/ListBirthday';
 import 'firebase/auth';
+
+if (!global.btoa) global.btoa = encode;
+if (!global.atob) global.atob = decode;
+
+LogBox.ignoreAllLogs;
 
 export default function App() {
   const [user, setUser] = useState(undefined);
@@ -19,7 +26,7 @@ export default function App() {
     <>
       <StatusBar barStyle="light-content" />
       <SafeAreaView style={styles.background}>
-        {user ? <Text>Estas loggeado</Text> : <Auth />}
+        {user ? <ListBirthday user={user} /> : <Auth />}
       </SafeAreaView>
     </>
   );
